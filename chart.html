@@ -1,0 +1,537 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Donut Chart Builder</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #f0f4f8;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #2d3748;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px 48px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: #718096;
+      margin-bottom: 28px;
+    }
+
+    .layout {
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+      width: 100%;
+      max-width: 980px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Controls panel ── */
+    .controls {
+      flex: 1;
+      min-width: 300px;
+      background: #fff;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #a0aec0;
+      margin-bottom: 12px;
+      margin-top: 20px;
+    }
+    .section-title:first-child { margin-top: 0; }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 4px;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: #2d3748;
+      background: #f7fafc;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 12px;
+    }
+    input:focus, select:focus { border-color: #2196C9; background: #fff; }
+
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Sections builder */
+    #sections-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+
+    .section-row {
+      display: grid;
+      grid-template-columns: 28px 1fr 90px 28px;
+      gap: 8px;
+      align-items: center;
+      background: #f7fafc;
+      border-radius: 8px;
+      padding: 8px 10px;
+      border: 1.5px solid #e2e8f0;
+    }
+
+    .section-row .swatch {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      border: 1.5px solid #e2e8f0;
+      cursor: pointer;
+      padding: 0;
+      background: none;
+    }
+
+    .section-row input[type="color"] {
+      width: 28px; height: 28px;
+      border: none; padding: 0; margin: 0;
+      border-radius: 6px; cursor: pointer;
+      background: none;
+    }
+
+    .section-row .pct-input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      margin-bottom: 0;
+      background: #fff;
+    }
+
+    .section-row .label-input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      margin-bottom: 0;
+      background: #fff;
+    }
+
+    .remove-btn {
+      width: 26px; height: 26px;
+      border-radius: 6px;
+      border: none;
+      background: #fed7d7;
+      color: #c53030;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .remove-btn:hover { background: #fc8181; color: #fff; }
+
+    .add-btn {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1.5px dashed #2196C9;
+      background: transparent;
+      color: #2196C9;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .add-btn:hover { background: #ebf8ff; }
+
+    .warning {
+      font-size: 0.75rem;
+      color: #e53e3e;
+      margin-top: -6px;
+      margin-bottom: 8px;
+      min-height: 16px;
+    }
+
+    /* Color + font row */
+    .color-font-row {
+      display: grid;
+      grid-template-columns: 48px 1fr 1fr;
+      gap: 10px;
+      align-items: end;
+    }
+    .color-font-row input[type="color"] {
+      width: 48px; height: 38px;
+      border-radius: 8px;
+      border: 1.5px solid #e2e8f0;
+      padding: 2px;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+
+    .apply-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 11px;
+      border-radius: 9px;
+      border: none;
+      background: #2196C9;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      letter-spacing: 0.2px;
+    }
+    .apply-btn:hover { background: #1976a8; }
+    .apply-btn:active { transform: scale(0.98); }
+
+    /* ── Preview panel ── */
+    .preview {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #chart-container {
+      background: #fff;
+      border-radius: 14px;
+      padding: 32px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #donut-svg { display: block; }
+
+    /* Legend */
+    #legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      justify-content: center;
+      max-width: 340px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: #4a5568;
+      font-weight: 500;
+    }
+    .legend-dot {
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* Download btn */
+    .download-btn {
+      padding: 9px 22px;
+      border-radius: 9px;
+      border: 1.5px solid #2196C9;
+      background: #fff;
+      color: #2196C9;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .download-btn:hover { background: #ebf8ff; }
+
+    .col-header {
+      font-size: 0.72rem;
+      color: #a0aec0;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+      display: grid;
+      grid-template-columns: 28px 1fr 90px 28px;
+      gap: 8px;
+      padding: 0 10px;
+    }
+
+    @media (max-width: 700px) {
+      .layout { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Donut Chart Builder</h1>
+<p class="subtitle">Configure, preview and download your chart</p>
+
+<div class="layout">
+
+  <!-- Controls -->
+  <div class="controls">
+
+    <div class="section-title">Chart Sections</div>
+    <div class="col-header">
+      <span>Color</span><span>Label</span><span>%</span><span></span>
+    </div>
+    <div id="sections-list"></div>
+    <div class="warning" id="pct-warning"></div>
+    <button class="add-btn" onclick="addSection()">+ Add section</button>
+
+    <div class="section-title">Center Text</div>
+    <label>Font size (px)</label>
+    <input type="number" id="font-size" value="22" min="8" max="80"/>
+
+    <label>Font weight</label>
+    <select id="font-weight">
+      <option value="400">Regular</option>
+      <option value="600">Semi-bold</option>
+      <option value="700" selected>Bold</option>
+      <option value="900">Black</option>
+    </select>
+
+    <div class="color-font-row">
+      <div>
+        <label>Color</label>
+        <input type="color" id="text-color" value="#444444"/>
+      </div>
+      <div>
+        <label>Font family</label>
+        <select id="font-family">
+          <option value="Arial, sans-serif" selected>Arial</option>
+          <option value="'Segoe UI', sans-serif">Segoe UI</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="'Courier New', monospace">Courier New</option>
+          <option value="Verdana, sans-serif">Verdana</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-title">Ring Dimensions</div>
+    <div class="row-2">
+      <div>
+        <label>Outer radius (px)</label>
+        <input type="number" id="outer-r" value="80" min="30" max="200"/>
+      </div>
+      <div>
+        <label>Arch width (px)</label>
+        <input type="number" id="arch-width" value="22" min="4" max="100"/>
+      </div>
+    </div>
+
+    <button class="apply-btn" onclick="render()">▶ Generate Chart</button>
+
+  </div>
+
+  <!-- Preview -->
+  <div class="preview">
+    <div id="chart-container">
+      <svg id="donut-svg"></svg>
+    </div>
+    <div id="legend"></div>
+    <button class="download-btn" onclick="downloadSVG()">⬇ Download SVG</button>
+    <button class="download-btn" onclick="downloadPNG()">⬇ Download PNG</button>
+  </div>
+
+</div>
+
+<script>
+  // ── Default state (from the original image) ──
+  let sections = [
+    { color: '#2196C9', label: 'Blue',  pct: 65 },
+    { color: '#E53935', label: 'Red',   pct: 20 },
+    { color: '#D8D8D8', label: 'Gray',  pct: 15 },
+  ];
+
+  function angleToXY(deg, r) {
+    const rad = (deg - 90) * Math.PI / 180;
+    return { x: +(r * Math.cos(rad)).toFixed(4), y: +(r * Math.sin(rad)).toFixed(4) };
+  }
+
+  function buildArcPath(startDeg, endDeg, R, innerR) {
+    const s = angleToXY(startDeg, R);
+    const e = angleToXY(endDeg, R);
+    const si = angleToXY(startDeg, innerR);
+    const ei = angleToXY(endDeg, innerR);
+    const sweep = endDeg - startDeg;
+    const lg = sweep > 180 ? 1 : 0;
+    return `M ${s.x},${s.y} A ${R},${R} 0 ${lg},1 ${e.x},${e.y} L ${ei.x},${ei.y} A ${innerR},${innerR} 0 ${lg},0 ${si.x},${si.y} Z`;
+  }
+
+  function getCenterLabel() {
+    // Show percentage of the biggest section
+    let biggest = sections.reduce((a, b) => b.pct > a.pct ? b : a, sections[0]);
+    return biggest ? biggest.pct.toFixed(1) + '%' : '';
+  }
+
+  function render() {
+    readSectionsFromDOM();
+    // Auto-sort: biggest first, smallest last
+    sections.sort((a, b) => b.pct - a.pct);
+    rebuildSectionsList();
+    const R = parseInt(document.getElementById('outer-r').value) || 80;
+    const archW = parseInt(document.getElementById('arch-width').value) || 22;
+    const innerR = Math.max(R - archW, 4);
+    const fontSize = parseInt(document.getElementById('font-size').value) || 22;
+    const fontWeight = document.getElementById('font-weight').value;
+    const fontFamily = document.getElementById('font-family').value;
+    const textColor = document.getElementById('text-color').value;
+
+    const totalPct = sections.reduce((s, x) => s + x.pct, 0);
+    const warning = document.getElementById('pct-warning');
+    if (Math.abs(totalPct - 100) > 0.01) {
+      warning.textContent = `⚠ Percentages sum to ${totalPct.toFixed(1)}% (should be 100%)`;
+    } else {
+      warning.textContent = '';
+    }
+
+    const pad = 10;
+    const size = (R + pad) * 2;
+    const cx = size / 2, cy = size / 2;
+
+    const svg = document.getElementById('donut-svg');
+    svg.setAttribute('width', size);
+    svg.setAttribute('height', size);
+    svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+
+    let paths = '';
+    let cursor = 0;
+    const scale = 360 / totalPct;
+
+    sections.forEach(sec => {
+      const sweep = sec.pct * scale;
+      const path = buildArcPath(cursor, cursor + sweep, R, innerR);
+      paths += `<path d="${path}" fill="${sec.color}" transform="translate(${cx},${cy})"/>\n`;
+      cursor += sweep;
+    });
+
+    const label = getCenterLabel();
+    paths += `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central"
+      font-size="${fontSize}" font-weight="${fontWeight}" fill="${textColor}"
+      font-family="${fontFamily}">${label}</text>`;
+
+    svg.innerHTML = paths;
+
+    // Legend
+    const legend = document.getElementById('legend');
+    legend.innerHTML = sections.map(s =>
+      `<div class="legend-item">
+        <div class="legend-dot" style="background:${s.color}"></div>
+        <span>${s.label} — ${s.pct}%</span>
+      </div>`
+    ).join('');
+  }
+
+  function readSectionsFromDOM() {
+    const rows = document.querySelectorAll('.section-row');
+    sections = Array.from(rows).map(row => ({
+      color: row.querySelector('input[type="color"]').value,
+      label: row.querySelector('.label-input').value || 'Section',
+      pct:   parseFloat(row.querySelector('.pct-input').value) || 0,
+    }));
+  }
+
+  function buildSectionRow(sec, idx) {
+    const div = document.createElement('div');
+    div.className = 'section-row';
+    div.dataset.idx = idx;
+    div.innerHTML = `
+      <input type="color" value="${sec.color}" title="Pick color"/>
+      <input type="text" class="label-input" value="${sec.label}" placeholder="Label"/>
+      <input type="number" class="pct-input" value="${sec.pct}" min="0" max="100" step="0.1"/>
+      <button class="remove-btn" onclick="removeSection(${idx})" title="Remove">×</button>
+    `;
+    return div;
+  }
+
+  function rebuildSectionsList() {
+    const list = document.getElementById('sections-list');
+    list.innerHTML = '';
+    sections.forEach((sec, i) => list.appendChild(buildSectionRow(sec, i)));
+  }
+
+  function addSection() {
+    readSectionsFromDOM();
+    sections.push({ color: '#AAAAAA', label: 'Section', pct: 10 });
+    rebuildSectionsList();
+    render();
+  }
+
+  function removeSection(idx) {
+    readSectionsFromDOM();
+    if (sections.length <= 1) return;
+    sections.splice(idx, 1);
+    rebuildSectionsList();
+    render();
+  }
+
+  function downloadSVG() {
+    const svg = document.getElementById('donut-svg');
+    const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'donut-chart.svg';
+    a.click();
+  }
+
+  function downloadPNG() {
+    const svg = document.getElementById('donut-svg');
+    const scale = 3; // 3× = high-res
+    const w = parseInt(svg.getAttribute('width'));
+    const h = parseInt(svg.getAttribute('height'));
+    const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = w * scale;
+      canvas.height = h * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0);
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = 'donut-chart.png';
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }
+
+  // Allow Enter key anywhere in controls to trigger render
+  document.querySelector('.controls').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); render(); }
+  });
+
+  // Init — build list but don't render until user clicks Generate
+  rebuildSectionsList();
+  render();
+</script>
+</body>
+</html>
